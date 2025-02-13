@@ -5,10 +5,12 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { trpc } from "../../../../utils/trpc";
 import { TextField, Button, Container, Typography, Paper, Box, CircularProgress } from "@mui/material";
+import KanbanBoard from "../all-todos";
 
 const AddTask = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [deadline, setDeadline] = useState(""); // Deadline state
   const { data: session } = useSession();
   const queryClient = trpc.useUtils(); // For refetching tasks
 
@@ -22,6 +24,7 @@ const AddTask = () => {
       refetch(); // Refetch the tasks list after adding a new task
       setTitle(""); // Clear input fields
       setDescription("");
+      setDeadline(""); // Clear the deadline field after successful creation
     },
     onError: (error) => {
       console.error("Error creating task:", error);
@@ -35,14 +38,20 @@ const AddTask = () => {
       return;
     }
 
+    const formattedDeadline = deadline ? new Date(deadline).toISOString() : new Date().toISOString();
+
     createTask.mutate({
       title,
       description,
       userId: session.user.id,
+      deadline: formattedDeadline, // Pass the formatted deadline
     });
   };
 
+
+
   return (
+    <>
     <Container maxWidth="sm">
       <Paper elevation={3} sx={{ p: 4, mt: 5, borderRadius: 2 }}>
         <Typography variant="h5" fontWeight="bold" gutterBottom>
@@ -69,12 +78,26 @@ const AddTask = () => {
             multiline
             rows={4}
           />
+          {/* {/ Deadline input field /} */}
+            <TextField
+              fullWidth
+              label="Deadline"
+              variant="outlined"
+              type="date" // Use date input type
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
+              required
+              margin="normal"
+              InputLabelProps={{
+                shrink: true, // To keep the label above the field for date input
+              }}
+            />
           <Button
             type="submit"
             variant="contained"
             color="primary"
             fullWidth
-            sx={{ mt: 2 }}
+            sx={{ mt: 3, mb: 2 , bgcolor: "	 #001a33" ,color:'white'}}
             disabled={createTask.isPending}
           >
             {createTask.isPending ? "Adding..." : "Add Task"}
@@ -83,26 +106,10 @@ const AddTask = () => {
       </Paper>
 
       {/* {/ Display tasks below the form /} */}
-      <Paper elevation={3} sx={{ p: 4, mt: 5, borderRadius: 2 }}>
-        <Typography variant="h5" fontWeight="bold" gutterBottom>
-          All Tasks
-        </Typography>
-        {isLoading ? (
-          <CircularProgress />
-        ) : error ? (
-          <Typography color="error">Failed to load tasks.</Typography>
-        ) : tasks?.length === 0 ? (
-          <Typography>No tasks found.</Typography>
-        ) : (
-          tasks?.map((task) => (
-            <Paper key={task.id} elevation={1} sx={{ p: 2, mb: 2 }}>
-              <Typography variant="h6">{task.title}</Typography>
-              <Typography variant="body2">{task.description}</Typography>
-            </Paper>
-          ))
-        )}
-      </Paper>
     </Container>
+    <br/>
+      <KanbanBoard/>
+      </>
   );
 };
 

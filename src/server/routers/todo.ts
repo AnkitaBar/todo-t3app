@@ -6,27 +6,35 @@ import { prisma } from "../../../lib/db";
 export const taskRouter = router({
     // for creating a new task
     createTask: procedure
-    .input(z.object({ title: z.string(), description: z.string(), userId: z.string() }))
-    // .mutation(async ({ input }) => {
-    //   return await prisma.task.create({
-    //     data: { title: input.title, completed: false, userId: input.userId },
-    //   });
-    // }),
-
+    .input(
+      z.object({
+        title: z.string(),
+        description: z.string(),
+        userId: z.string(),
+        deadline: z.string().optional(), // Accepts ISO date string (optional)
+      })
+    )
     .mutation(async ({ input }) => {
-        const userExists = await prisma.user.findUnique({
-            where: { id: input.userId },
-          });
-      
-          if (!userExists) {
-            console.error("User not found with ID:", input.userId);
-            throw new Error("User not found");
-          }
-      
-          return await prisma.task.create({
-            data: { title: input.title, description: input.description, completed: false, userId: input.userId },
-          });
-      }),
+      const userExists = await prisma.user.findUnique({
+        where: { id: input.userId },
+      });
+  
+      if (!userExists) {
+        console.error("User not found with ID:", input.userId);
+        throw new Error("User not found");
+      }
+  
+      return await prisma.task.create({
+        data: {
+          title: input.title,
+          description: input.description,
+          userId: input.userId,
+          completed: false,
+          deadline: input.deadline ? new Date(input.deadline) : null, // Convert string to Date
+        },
+      });
+    }),
+  
 
 
     // for getting all tasks
@@ -78,12 +86,14 @@ updateTask: procedure
 }),
 
 
+// Edit task details
 editTask: procedure
 .input(
   z.object({
     id: z.string(),
     title: z.string(),
     description: z.string().optional(),
+    deadline: z.string().transform((date) => new Date(date)), // Convert string to Date
   })
 )
 .mutation(async ({ input }) => {
@@ -92,9 +102,11 @@ editTask: procedure
     data: {
       title: input.title,
       description: input.description ?? undefined,
+      deadline: input.deadline, // Store deadline
     },
   });
 }),
+
 
 
   // for deleting a task

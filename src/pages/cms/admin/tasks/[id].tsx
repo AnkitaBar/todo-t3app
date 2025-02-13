@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { trpc } from "../../../../../utils/trpc";
 import {
@@ -19,18 +19,24 @@ import {
   IconButton,
 } from "@mui/material";
 import { Edit, Delete } from "@mui/icons-material";
+import { getSession } from "next-auth/react";
+import { Session } from "next-auth";
+
 
 type Task = {
   id: string;
   title: string;
-  description?: string ;
+  description?: string;
+  deadline?: Date | null;
   completed: boolean;
   inProgress: boolean;
 };
 
 const UserTasksPage = () => {
-  const router = useRouter();
+    const router = useRouter();
   const { id } = router.query;
+
+
 
   // Fetch tasks
   const { data: tasks, isLoading, error } = trpc.user.getUserTasks.useQuery(id as string, {
@@ -75,17 +81,18 @@ const UserTasksPage = () => {
         id: selectedTask.id,
         title: selectedTask.title,
         description: selectedTask.description,
+        deadline: selectedTask.deadline ? selectedTask.deadline.toISOString() : '',
       });
     }
   };
 
+  
   // Handle Task Delete
   const handleDeleteTask = (taskId: string) => {
     if (window.confirm("Are you sure you want to delete this task?")) {
       deleteTaskMutation.mutate(taskId); // Pass only taskId instead of { id: taskId }
     }
   };
-  
 
   if (isLoading) return <Typography>Loading tasks...</Typography>;
   if (error) return <Typography>Error fetching tasks</Typography>;
@@ -101,6 +108,7 @@ const UserTasksPage = () => {
             <TableCell><strong>Title</strong></TableCell>
             <TableCell><strong>Description</strong></TableCell>
             <TableCell><strong>Status</strong></TableCell>
+            <TableCell><strong>Deadline</strong></TableCell> 
             <TableCell><strong>Actions</strong></TableCell>
           </TableRow>
         </TableHead>
@@ -113,7 +121,10 @@ const UserTasksPage = () => {
                 {task.completed ? "Completed" : task.inProgress ? "In Progress" : "Pending"}
               </TableCell>
               <TableCell>
-                <IconButton color="primary" onClick={() => handleOpen(task)}>
+                {task.deadline ? new Date(task.deadline).toLocaleDateString() : "No deadline"}
+              </TableCell> 
+              <TableCell>
+                <IconButton color="primary" onClick={() => handleOpen({ ...task, deadline: task.deadline ? new Date(task.deadline) : null })}>
                   <Edit />
                 </IconButton>
                 <IconButton color="error" onClick={() => handleDeleteTask(task.id)}>
@@ -124,11 +135,13 @@ const UserTasksPage = () => {
           ))}
         </TableBody>
       </Table>
-      <Button onClick={() => router.back()} sx={{ mt: 2 }} variant="contained">
+      <Button onClick={() => router.back()} 
+            sx={{ mt: 3, mb: 2 , bgcolor: "	 #001a33" ,color:'white'}}
+            variant="contained">
         Back
       </Button>
 
-      {/* Edit Task Dialog */}
+      {/* {/ {/ Edit Task Dialog /} /} */}
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Edit Task</DialogTitle>
         <DialogContent>

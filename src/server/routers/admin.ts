@@ -49,6 +49,7 @@ export const userRouter = router({
         id: true,
         title: true,
         description: true,
+        deadline: true,
         inProgress: true,
         completed: true,
       },
@@ -56,10 +57,11 @@ export const userRouter = router({
       tasks.map(task => ({
         ...task,
         description: task.description ?? undefined, // Convert null to undefined
+        deadline: task.deadline ? task.deadline.toISOString() : undefined, // Convert Date to string
       }))
     );
   }),
-
+  
 
   deleteTask: procedure
   .input(z.object({ id: z.string() })) // Expect an object { id: string }

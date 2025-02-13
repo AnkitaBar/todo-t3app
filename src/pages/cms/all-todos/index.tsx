@@ -1,3 +1,5 @@
+
+
 import { Container, Typography, Paper, Box, IconButton, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Button } from "@mui/material";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -14,6 +16,8 @@ interface Task {
   completed: boolean;
   inProgress: boolean;
   userId: string;
+  deadline: Date | null;
+  
 }
 
 export const KanbanBoard = () => {
@@ -32,14 +36,12 @@ export const KanbanBoard = () => {
     },
   });
 
-
- // Mutation to delete task
-const deleteTask = trpc.task.deleteTask.useMutation({
+  // Mutation to delete task
+  const deleteTask = trpc.task.deleteTask.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries<any>([["task.getTasks", { userId: session?.user?.id }]]);
     },
   });
-  
 
   // Mutation to edit task
   const editTask = trpc.task.editTask.useMutation({
@@ -49,9 +51,20 @@ const deleteTask = trpc.task.deleteTask.useMutation({
   });
 
   // Categorize tasks
-  const allTasks = tasks?.filter((task) => !task.completed && !task.inProgress) || [];
-  const inProgressTasks = tasks?.filter((task) => task.inProgress && !task.completed) || [];
-  const doneTasks = tasks?.filter((task) => task.completed) || [];
+  const allTasks = tasks?.filter((task) => !task.completed && !task.inProgress).map(task => ({
+    ...task,
+    deadline: task.deadline ? new Date(task.deadline) : null
+  })) || [];
+  const inProgressTasks = tasks?.filter((task) => task.inProgress && !task.completed).map(task => ({
+    ...task,
+    deadline: task.deadline ? new Date(task.deadline) : null
+  })) || [];
+  const doneTasks = tasks?.filter((task) => task.completed).map(task => ({
+    ...task,
+    deadline: task.deadline ? new Date(task.deadline) : null
+  })) || [];
+
+  
 
   // Handle Drag & Drop
   const onDragEnd = (result: DropResult) => {
@@ -69,7 +82,7 @@ const deleteTask = trpc.task.deleteTask.useMutation({
   };
 
   const handleDeleteTask = (id: string) => {
-    deleteTask.mutate( id );
+    deleteTask.mutate(id);
   };
 
   // Dialog state for editing task
@@ -77,11 +90,14 @@ const deleteTask = trpc.task.deleteTask.useMutation({
   const [currentTask, setCurrentTask] = useState<Task | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
+  const [newDeadline, setNewDeadline] = useState("");
 
   const handleOpenDialog = (task: Task) => {
     setCurrentTask(task);
     setNewTitle(task.title);
     setNewDescription(task.description || "");
+    setNewDeadline(task.deadline ? task.deadline.toLocaleDateString('en-CA') : "");
+
     setOpen(true);
   };
 
@@ -90,6 +106,7 @@ const deleteTask = trpc.task.deleteTask.useMutation({
     setCurrentTask(null);
     setNewTitle("");
     setNewDescription("");
+    setNewDeadline("");
   };
 
   const handleUpdateTask = () => {
@@ -98,11 +115,11 @@ const deleteTask = trpc.task.deleteTask.useMutation({
         id: currentTask.id,
         title: newTitle,
         description: newDescription,
+        deadline: newDeadline,
       });
     }
     handleCloseDialog();
   };
-
   if (isLoading) return <Typography>Loading tasks...</Typography>;
   if (error) return <Typography color="error">Failed to load tasks.</Typography>;
 
@@ -139,6 +156,17 @@ const deleteTask = trpc.task.deleteTask.useMutation({
             multiline
             rows={4}
           />
+          <TextField
+            label="Deadline"
+            fullWidth
+            type="date"
+            value={newDeadline}
+            onChange={(e) => setNewDeadline(e.target.value)}
+            margin="normal"
+            InputLabelProps={{
+              shrink: true, // Keeps the label above the input
+            }}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog} color="secondary">
@@ -152,8 +180,6 @@ const deleteTask = trpc.task.deleteTask.useMutation({
     </Container>
   );
 };
-
-// Kanban Column Component
 interface KanbanColumnProps {
   title: string;
   tasks: Task[];
@@ -187,7 +213,15 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({ title, tasks, id, onDelete,
                   <Typography variant="h6">{task.title}</Typography>
                   <Typography variant="body2">{task.description}</Typography>
 
+                  {/* {/ Display deadline /} */}
+                  {task.deadline && (
+                    <Typography variant="body2" color="textSecondary">
+                      Deadline: {new Date(task.deadline).toLocaleDateString()}
+                    </Typography>
+                  )}
+
                   {/* {/ Edit and Delete buttons /} */}
+
                   <Box display="flex" justifyContent="flex-end" gap={1}>
                     <IconButton onClick={() => onEdit(task)}>
                       <EditIcon />

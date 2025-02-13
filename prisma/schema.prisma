@@ -14,14 +14,14 @@ datasource db {
 }
 
 model User {
-  id       String  @id @default(uuid())
-  name     String
-  email    String  @unique
-  password String
-  role     String  @default("user") // Roles: "user" or "admin"
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("user") // Roles: "user" or "admin"
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  tasks    Task[]
+  tasks     Task[]
 }
 
 model Task {
@@ -29,7 +29,8 @@ model Task {
   title       String
   description String?
   completed   Boolean  @default(false)
-   inProgress  Boolean  @default(false)
+  inProgress  Boolean  @default(false)
+  deadline    DateTime?
   userId      String
   user        User     @relation(fields: [userId], references: [id])
 }

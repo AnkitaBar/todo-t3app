@@ -77,8 +77,8 @@ export const Login = () => {
             type="submit"
             fullWidth
             variant="contained"
-            color="primary"
-            sx={{ mt: 3, mb: 2 }}
+            // color="primary"
+            sx={{ mt: 3, mb: 2 , bgcolor: "	 #001a33" ,color:'white'}}
             disabled={loading}
           >
             {loading ? <CircularProgress size={24} color="inherit" /> : "Login"}
@@ -87,7 +87,8 @@ export const Login = () => {
 
         <Typography align="center">
           Don't have an account?{" "}
-          <Link href="/auth/register" underline="hover">
+          <Link href="/auth/register" underline="hover"
+          sx={{color: "	 #001a33", fontWeight:'bold'}}>
             Sign Up
           </Link>
         </Typography>

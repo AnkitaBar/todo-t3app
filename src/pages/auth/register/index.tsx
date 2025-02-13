@@ -86,7 +86,7 @@ export const Register = () => {
             fullWidth
             variant="contained"
             color="primary"
-            sx={{ mt: 3, mb: 2 }}
+            sx={{ mt: 3, mb: 2 , bgcolor: "	 #001a33" ,color:'white'}}
             disabled={loading}
           >
             {loading ? <CircularProgress size={24} color="inherit" /> : "Register"}
@@ -95,7 +95,10 @@ export const Register = () => {
 
         <Typography align="center">
           Already have an account?{" "}
-          <Link href="/auth/login" underline="hover">
+          <Link href="/auth/login" underline="hover"
+                    sx={{color: "	 #001a33", fontWeight:'bold'}}
+                    >
+
             Login
           </Link>
         </Typography>

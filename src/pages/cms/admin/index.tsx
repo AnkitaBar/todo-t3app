@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { trpc } from "../../../../utils/trpc";
-import { useSession } from "next-auth/react";
+import { getSession, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import {
   Table,
@@ -13,10 +13,22 @@ import {
   Typography,
   Button,
 } from "@mui/material";
+import { Session } from "next-auth";
 
 const AdminDashboard = () => {
+    const [adminSession, setAdminSession] = useState<Session | null>(null);
+  
   const { data: session } = useSession();
   const router = useRouter();
+
+   useEffect(() => {
+      const fetchSession = async () => {
+        const sessionData = await getSession();
+        setAdminSession(sessionData);
+      };
+      fetchSession();
+    }, []);
+    console.log(adminSession)
 
   const { data: users, isLoading, error } = trpc.user.getAllUsers.useQuery(
     { role: session?.user.role === "admin" ? "user" : "" },
@@ -29,7 +41,7 @@ const AdminDashboard = () => {
   return (
     <TableContainer component={Paper} sx={{ maxWidth: 800, margin: "auto", mt: 4 }}>
       <Typography variant="h6" sx={{ textAlign: "center", my: 2 }}>
-        Admin Dashboard
+        Welcome {adminSession?.user?.name || "Admin"} 
       </Typography>
       <Table>
         <TableHead>
@@ -49,7 +61,8 @@ const AdminDashboard = () => {
                 <Button
                   variant="outlined"
                   color="primary"
-                  sx={{ ml: 2 }}
+                  sx={{ ml: 2 ,  bgcolor: "	 #001a33" ,color:'white'}}
+                
                   onClick={() => router.push(`/cms/admin/tasks/${user.id}`)}
                 >
                   View Tasks
